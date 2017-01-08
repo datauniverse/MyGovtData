@@ -4,12 +4,21 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -71,6 +80,58 @@ public class MainFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        HttpURLConnection urlConnection = null;
+        BufferedReader reader = null;
+        String trainJsonString = null;
+
+        try {
+            URL url = new URL("https://data.gov.in/api/datastore/resource.json?resource_id=b46200c1-ca9a-4bbe-92f8-b5039cc25a12&api-key=574cfe75dbb216592ad3419d97bfa16c");
+
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+            urlConnection.connect();
+
+            InputStream inputStream = urlConnection.getInputStream();
+            StringBuffer buffer = new StringBuffer();
+            if (inputStream == null) {
+                throw new Exception("No data received. Stream is null.");
+            }
+            reader = new BufferedReader(new InputStreamReader(inputStream));
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                buffer.append(line + "\n");
+            }
+
+            if (buffer.length() == 0) {
+                throw new Exception("No data received. Buffer length was 0.");
+            }
+
+            trainJsonString = buffer.toString();
+        } catch (MalformedURLException exception) {
+            Log.e("MainFragment", "Error ", exception);
+            return null;
+        } catch (IOException exception) {
+            Log.e("MainFragment", "Error ", exception);
+            return null;
+        } catch (Exception exception) {
+            Log.e("MainFragment", "Error ", exception);
+            return null;
+        }
+
+        finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (final IOException e) {
+                    Log.e("MainFragment", "Error ", e);
+                }
+            }
+        }
+
         String[] data = {
                 "Bangalore Express",
                 "Kanyakumari Express",
