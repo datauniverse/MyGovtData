@@ -6,6 +6,9 @@ import android.os.Bundle;
 import android.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -75,63 +78,28 @@ public class MainFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+        setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.mainfragment, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_refresh) {
+            FetchTrainTask task = new FetchTrainTask();
+            task.execute("1");
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        HttpURLConnection urlConnection = null;
-        BufferedReader reader = null;
-        String trainJsonString = null;
-
-        try {
-            URL url = new URL("https://data.gov.in/api/datastore/resource.json?resource_id=b46200c1-ca9a-4bbe-92f8-b5039cc25a12&api-key=574cfe75dbb216592ad3419d97bfa16c");
-
-            urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestMethod("GET");
-            urlConnection.connect();
-
-            InputStream inputStream = urlConnection.getInputStream();
-            StringBuffer buffer = new StringBuffer();
-            if (inputStream == null) {
-                throw new Exception("No data received. Stream is null.");
-            }
-            reader = new BufferedReader(new InputStreamReader(inputStream));
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                buffer.append(line + "\n");
-            }
-
-            if (buffer.length() == 0) {
-                throw new Exception("No data received. Buffer length was 0.");
-            }
-
-            trainJsonString = buffer.toString();
-        } catch (MalformedURLException exception) {
-            Log.e("MainFragment", "Error ", exception);
-            return null;
-        } catch (IOException exception) {
-            Log.e("MainFragment", "Error ", exception);
-            return null;
-        } catch (Exception exception) {
-            Log.e("MainFragment", "Error ", exception);
-            return null;
-        }
-
-        finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (final IOException e) {
-                    Log.e("MainFragment", "Error ", e);
-                }
-            }
-        }
-
         String[] data = {
                 "Bangalore Express",
                 "Kanyakumari Express",
