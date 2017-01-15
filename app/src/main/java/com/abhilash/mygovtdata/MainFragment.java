@@ -1,7 +1,9 @@
 package com.abhilash.mygovtdata;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.util.Log;
@@ -11,8 +13,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -121,6 +129,15 @@ public class MainFragment extends Fragment {
 
         ListView listView = (ListView) rootView.findViewById(R.id.listview);
         listView.setAdapter(mTrainAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String train = mTrainAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), DetailActivity.class)
+                        .putExtra(Intent.EXTRA_TEXT, train);
+                startActivity(intent);
+            }
+        });
 
         return rootView;
     }
@@ -164,5 +181,116 @@ public class MainFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+
+    public class FetchTrainTask extends AsyncTask<String, Void, List<Train>> {
+        private final String LOG_TAG = FetchTrainTask.class.getSimpleName();
+
+        private List<Train> getTrainDataFromJson(String trainJsonString) throws JSONException {
+            List<Train> trains = new ArrayList<>();
+            JSONObject trainJsonObject = new JSONObject(trainJsonString);
+            JSONArray trainJsonArray = trainJsonObject.getJSONArray("records");
+            for (int i = 0; i < trainJsonArray.length(); i++) {
+                String trainNumber = trainJsonArray.getJSONObject(i)
+                        .getString("Train No.").replace("'", "").trim();
+                String trainName = trainJsonArray.getJSONObject(i)
+                        .getString("train Name").trim();
+
+                boolean trainExists = false;
+                for (Train train : trains) {
+                    if (train.getTrainNumber().equals(trainNumber)) {
+                        trainExists = true;
+                    }
+                }
+                if (!trainExists) {
+                    trains.add(new Train(trainNumber, trainName));
+                }
+            }
+            return trains;
+        }
+
+        @Override
+        protected List<Train> doInBackground(String... params) {
+
+            if (params.length == 0) {
+                return null;
+            }
+
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+            String trainJsonString = null;
+            List<Train> trains;
+
+            try {
+                final String BASE_URL = "https://data.gov.in/api/datastore/resource.json?resource_id=b46200c1-ca9a-4bbe-92f8-b5039cc25a12";
+                final String API_KEY = "api-key";
+                final String OFFSET = "offset";
+
+                Uri builtUri = Uri.parse(BASE_URL).buildUpon()
+                        .appendQueryParameter(API_KEY, BuildConfig.OPEN_GOV_DATA_API_KEY)
+                        .appendQueryParameter(OFFSET, params[0])
+                        .build();
+
+                URL url = new URL(builtUri.toString());
+
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    throw new Exception("No data received. Stream is null.");
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line + "\n");
+                }
+
+                if (buffer.length() == 0) {
+                    throw new Exception("No data received. Buffer length was 0.");
+                }
+
+                trainJsonString = buffer.toString();
+
+                trains = getTrainDataFromJson(trainJsonString);
+
+                return trains;
+            } catch (MalformedURLException exception) {
+                Log.e(LOG_TAG, "Error ", exception);
+                return null;
+            } catch (IOException exception) {
+                Log.e(LOG_TAG, "Error ", exception);
+                return null;
+            } catch (Exception exception) {
+                Log.e(LOG_TAG, "Error ", exception);
+                return null;
+            }
+
+            finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (final IOException e) {
+                        Log.e(LOG_TAG, "Error ", e);
+                    }
+                }
+            }
+        }
+
+        @Override
+        protected void onPostExecute(List<Train> trains) {
+            if (trains != null) {
+                mTrainAdapter.clear();
+                for (Train train : trains) {
+                    mTrainAdapter.add(train.getTrainNumber() + " - " + train.getTrainName());
+                }
+            }
+        }
     }
 }
