@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="PreferenceCategory">
+        <EditTextPreference
+            android:defaultValue="@string/pref_station_default"
+            android:inputType="text"
+            android:key="@string/pref_station_key"
+            android:singleLine="true"
+            android:title="@string/pref_station_label" />
+    </PreferenceCategory>
+</PreferenceScreen>
