@@ -6,6 +6,12 @@ package com.abhilash.mygovtdata;
 
 public class Train {
     private String trainNumber;
+    private String trainName;
+
+    public Train(String trainNumber, String trainName) {
+        this.trainNumber = trainNumber;
+        this.trainName = trainName;
+    }
 
     public String getTrainName() {
         return trainName;
@@ -15,18 +21,11 @@ public class Train {
         this.trainName = trainName;
     }
 
-    private String trainName;
-
     public String getTrainNumber() {
         return trainNumber;
     }
 
     public void setTrainNumber(String trainNumber) {
         this.trainNumber = trainNumber;
-    }
-
-    public Train(String trainNumber, String trainName) {
-        this.trainNumber = trainNumber;
-        this.trainName = trainName;
     }
 }
