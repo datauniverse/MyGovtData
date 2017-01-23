@@ -5,10 +5,10 @@ android {
     buildToolsVersion "22.0.1"
     defaultConfig {
         applicationId "com.abhilash.mygovtdata"
-        minSdkVersion 23
+        minSdkVersion 19
         targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "2.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -20,13 +20,16 @@ android {
     buildTypes.each {
         it.buildConfigField 'String', 'OPEN_GOV_DATA_API_KEY', '"574cfe75dbb216592ad3419d97bfa16c"'
     }
+    productFlavors {
+    }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile 'com.android.support:appcompat-v7:23.4.0'
     testCompile 'junit:junit:4.12'
+    compile 'com.google.android.gms:play-services-appindexing:8.4.0'
 }
